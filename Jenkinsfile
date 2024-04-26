@@ -1,14 +1,11 @@
 pipeline {
     agent any
-    environment {
-        DOCKERHUB_CREDENTIALS = credentials('dckr_pat_ZccV2yLN5weYNwRJhLTS2LXI5hg')
-    }
     stages {
         stage("docker login") {
             steps {
                 echo " ============== docker login =================="
-                script {
-                    withCredentials([usernamePassword(credentialsId: DOCKERHUB_CREDENTIALS, usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub_id', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    script {
                         def loginResult = sh(script: "docker login -u $USERNAME -p $PASSWORD", returnStatus: true)
                         if (loginResult != 0) {
                             error "Failed to log in to Docker Hub. Exit code: ${loginResult}"
@@ -19,11 +16,12 @@ pipeline {
         }
         stage('DockerPS') {
             steps {
-                echo " ============== docker install apache =================="
-                sh 'docker build -t lendy123/shoptest:latest1 .'
-                sh 'docker run -d -p 8446:80 lendy123/shoptest:latest1'
-                sh 'docker push lendy123/shoptest:latest'
-                echo " ============== docker completed =================="
+                echo " ============== docker APACHE =================="
+                script {
+                    sh 'docker pull lendy123/shoptest:latest || true' // Pull the image if exists, ignore error if not
+                    sh 'docker run -d -p 8446:80 lendy123/shoptest:latest'
+                }
+                echo " ============== docker APACHE completed =================="
             }
         }
     }
